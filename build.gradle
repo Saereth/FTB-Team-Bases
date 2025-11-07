@@ -117,6 +117,7 @@ repositories {
 dependencies {
 	implementation "dev.ftb.mods:ftb-library-neoforge:${ftb_library_version}"
 	implementation "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
+	implementation "dev.ftb.mods:ftb-chunks-neoforge:${ftb_chunks_version}"
 
 	compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api")
 	localRuntime("top.theillusivec4.curios:curios-neoforge:${curios_version}")
@@ -204,6 +205,9 @@ publishMods {
 		projectId = project.curseforge_id
 		minecraftVersions.add(project.minecraft_version)
 		javaVersions.add(JavaVersion.VERSION_21)
+		requires('ftb-library-forge')
+		requires('ftb-teams-forge')
+		optional('ftb-chunks-forge')
 	}
 }
 
