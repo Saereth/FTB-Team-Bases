@@ -5,12 +5,14 @@ import dev.ftb.mods.ftbchunks.api.ChunkTeamData;
 import dev.ftb.mods.ftbchunks.api.ClaimResult;
 import dev.ftb.mods.ftbchunks.api.ClaimedChunkManager;
 import dev.ftb.mods.ftbchunks.api.FTBChunksAPI;
+import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.math.ChunkDimPos;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.config.ServerConfig;
 import dev.ftb.mods.ftbteams.api.FTBTeamsAPI;
 import dev.ftb.mods.ftbteams.api.Team;
 import dev.ftb.mods.ftbteams.api.TeamManager;
+import dev.ftb.mods.ftbteams.api.property.TeamProperties;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -27,13 +29,18 @@ public class AutoClaiming {
         }
 
         String teamName = ServerConfig.LOBBY_SERVER_TEAM_NAME.get();
+        Color4I lobbyTeamColor = ServerConfig.getLobbyTeamColor();
         try {
             TeamManager teamMgr = FTBTeamsAPI.api().getManager();
             ClaimedChunkManager chunkMgr = FTBChunksAPI.api().getManager();
 
             CommandSourceStack serverCmdSource = serverLevel.getServer().createCommandSourceStack();
             Team lobbyTeam = teamMgr.getTeamByID(LOBBY_SERVER_ID)
-                    .orElse(teamMgr.createServerTeam(serverCmdSource, teamName, null, ServerConfig.getLobbyTeamColor(), LOBBY_SERVER_ID));
+                    .orElse(teamMgr.createServerTeam(serverCmdSource, teamName, null, lobbyTeamColor, LOBBY_SERVER_ID));
+
+            // in case they've changed in config...
+            lobbyTeam.setProperty(TeamProperties.DISPLAY_NAME, teamName);
+            lobbyTeam.setProperty(TeamProperties.COLOR, lobbyTeamColor);
 
             ChunkTeamData chunkTeamData = chunkMgr.getOrCreateData(lobbyTeam);
 
