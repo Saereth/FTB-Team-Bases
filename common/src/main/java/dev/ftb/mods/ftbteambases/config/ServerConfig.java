@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbteambases.config;
 
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.snbt.config.*;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.worldgen.chunkgen.ChunkGenerators;
@@ -9,11 +10,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface ServerConfig {
     NameMap<GameType> GAME_TYPE_NAME_MAP = NameMap.of(GameType.ADVENTURE, GameType.values()).create();
@@ -74,6 +77,22 @@ public interface ServerConfig {
     BooleanValue TEAM_SPECIFIC_NETHER_ENTRY_POINT = NETHER.addBoolean("team_specific_nether_entry_point", true)
             .comment("If true, then players going to the Nether via Nether Portal will be sent to a random (but deterministic for the team) position in the Nether");
 
+    SNBTConfig AUTOCLAIMING = CONFIG.addGroup("autoclaiming")
+            .comment("Autoclaim lobby areas (FTB Chunks required)");
+    IntValue LOBBY_RADIUS = AUTOCLAIMING.addInt("lobby_radius", 0, 0, Integer.MAX_VALUE)
+            .comment("Radius in chunks for the lobby area to autoclaim",
+                    "0 = autoclaiming disabled",
+                    "1 = autoclaim just the chunk containing the lobby origin pos",
+                    "2+ = extend the autoclaim distance out by 1 chunk per amount beyond 1");
+    EnumValue<AutoClaimShape> LOBBY_SHAPE = AUTOCLAIMING.addEnum("lobby_shape", AutoClaimShape.NAME_MAP)
+            .comment("Shape to be autoclaimed");
+    StringValue LOBBY_SERVER_TEAM_NAME = AUTOCLAIMING.addString("server_team_name", "Lobby")
+            .comment("The display name for the server team which is used to claim the lobby chunks",
+                    "This name shows up on FTB Chunks mapping");
+    StringValue LOBBY_CLAIM_COLOR = AUTOCLAIMING.addString("lobby_claim_color", "#FF40FF")
+            .comment("The server team color",
+                    "Many color names work, and hex codes in the form '#RRGGBB' are accepted");
+
     static Optional<ResourceLocation> lobbyLocation() {
         if (LOBBY_STRUCTURE_LOCATION.get().isEmpty()) {
             return Optional.empty();
@@ -108,6 +127,49 @@ public interface ServerConfig {
 
     static List<ResourceLocation> additionalPregenDimensions() {
         return ADDITIONAL_PREGEN_DIMENSIONS.get();
+    }
+
+    static Color4I getLobbyTeamColor() {
+        Color4I teamColor = Color4I.fromString(ServerConfig.LOBBY_CLAIM_COLOR.get());
+        return teamColor.isEmpty() ? Color4I.rgb(0xFF40FF) : teamColor;
+    }
+
+    enum AutoClaimShape {
+        SQUARE("square"),
+        CIRCLE("circle");
+
+        public static final NameMap<AutoClaimShape> NAME_MAP = NameMap.of(SQUARE, values()).id(AutoClaimShape::getId).create();
+
+        private final String shape;
+
+        AutoClaimShape(String id) {
+            this.shape = id;
+        }
+
+        public String getId() {
+            return shape;
+        }
+
+        public void forEachChunk(BlockPos origin, int radius, Consumer<ChunkPos> consumer) {
+            ChunkPos chunk0 = new ChunkPos(origin);
+            BlockPos pos0 = chunk0.getMiddleBlockPosition(0);
+            int blockRadiusSq = (radius << 4) * (radius << 4);
+            switch (radius) {
+                case 0 -> { }
+                case 1 -> consumer.accept(chunk0);
+                default -> {
+                    int r = radius - 1;
+                    for (int cx = chunk0.x - r; cx <= chunk0.x + r; cx++) {
+                        for (int cz = chunk0.z - r; cz <= chunk0.z + r; cz++) {
+                            ChunkPos cp = new ChunkPos(cx, cz);
+                            if (this == SQUARE || cp.getMiddleBlockPosition(0).distSqr(pos0) < blockRadiusSq) {
+                                consumer.accept(cp);
+                            }
+                        }
+                    }
+                }
+            };
+        }
     }
 
     enum FeatureGeneration {
