@@ -48,7 +48,7 @@ public class AutoClaiming {
             chunkTeamData.getClaimedChunks().forEach(cc -> cc.unclaim(serverCmdSource, false));
 
             MutableInt claimed = new MutableInt(0);
-            ServerConfig.LOBBY_SHAPE.get().forEachChunk(ServerConfig.lobbyPos().get(), ServerConfig.LOBBY_RADIUS.get(), cp -> {
+            ServerConfig.LOBBY_SHAPE.get().forEachChunk(ServerConfig.getClaimCenter(), ServerConfig.LOBBY_RADIUS.get(), cp -> {
                 ClaimResult claimRes = chunkTeamData.claim(serverCmdSource, new ChunkDimPos(serverLevel.dimension(), cp), false);
                 if (!claimRes.isSuccess()) {
                     FTBTeamBases.LOGGER.error("Couldn't autoclaim lobby chunkpos {}: {}", cp, claimRes.getMessage().getString());

@@ -98,6 +98,8 @@ public interface ServerConfig {
     StringValue LOBBY_CLAIM_COLOR = AUTOCLAIMING.addString("lobby_claim_color", "#FF40FF")
             .comment("The server team color",
                     "Many color names work, and hex codes in the form '#RRGGBB' are accepted");
+    IntArrayValue LOBBY_CLAIM_CENTER = LOBBY.addIntArray("lobby_claim_center", new int[]{ 0, 0 })
+            .comment("X/Z chunk position for the centre of the claimed area");
 
     static Optional<ResourceLocation> lobbyLocation() {
         try {
@@ -136,6 +138,16 @@ public interface ServerConfig {
         return teamColor.isEmpty() ? Color4I.rgb(0xFF40FF) : teamColor;
     }
 
+    static ChunkPos getClaimCenter() {
+        int[] pos = ServerConfig.LOBBY_CLAIM_CENTER.get();
+        if (pos.length == 2) {
+            return new ChunkPos(pos[0], pos[1]);
+        } else {
+            FTBTeamBases.LOGGER.error("invalid lobby claim centre pos! expected 2 integers, got {}. default to (0, 0)_", pos.length);
+            return new ChunkPos(0, 0);
+        }
+    }
+
     enum AutoClaimShape {
         SQUARE("square"),
         CIRCLE("circle");
@@ -152,17 +164,16 @@ public interface ServerConfig {
             return shape;
         }
 
-        public void forEachChunk(BlockPos origin, int radius, Consumer<ChunkPos> consumer) {
-            ChunkPos chunk0 = new ChunkPos(origin);
-            BlockPos pos0 = chunk0.getMiddleBlockPosition(0);
+        public void forEachChunk(ChunkPos origin, int radius, Consumer<ChunkPos> consumer) {
+            BlockPos pos0 = origin.getMiddleBlockPosition(0);
             int blockRadiusSq = (radius << 4) * (radius << 4);
             switch (radius) {
                 case 0 -> { }
-                case 1 -> consumer.accept(chunk0);
+                case 1 -> consumer.accept(origin);
                 default -> {
                     int r = radius - 1;
-                    for (int cx = chunk0.x - r; cx <= chunk0.x + r; cx++) {
-                        for (int cz = chunk0.z - r; cz <= chunk0.z + r; cz++) {
+                    for (int cx = origin.x - r; cx <= origin.x + r; cx++) {
+                        for (int cz = origin.z - r; cz <= origin.z + r; cz++) {
                             ChunkPos cp = new ChunkPos(cx, cz);
                             if (this == SQUARE || cp.getMiddleBlockPosition(0).distSqr(pos0) < blockRadiusSq) {
                                 consumer.accept(cp);
