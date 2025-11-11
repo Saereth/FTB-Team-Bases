@@ -9,6 +9,7 @@ import dev.ftb.mods.ftbteambases.data.construction.BaseConstructionManager;
 import dev.ftb.mods.ftbteambases.data.construction.RelocatorTracker;
 import dev.ftb.mods.ftbteambases.data.definition.BaseDefinitionManager;
 import dev.ftb.mods.ftbteambases.data.purging.PurgeManager;
+import dev.ftb.mods.ftbteambases.integration.FTBChunksIntegration;
 import dev.ftb.mods.ftbteambases.net.SyncBaseTemplatesMessage;
 import dev.ftb.mods.ftbteambases.net.VoidTeamDimensionMessage;
 import dev.ftb.mods.ftbteambases.registry.ModArgumentTypes;
@@ -144,6 +145,7 @@ public class FTBTeamBases {
         if (event.getLevel() instanceof ServerLevel serverLevel) {
             if (serverLevel.dimension() == OVERWORLD) {
                 if (LobbyPregen.maybePregenLobby(serverLevel.getServer())) {
+                    FTBChunksIntegration.maybeAutoClaimLobby(serverLevel);
                     return;
                 }
             }
@@ -151,8 +153,10 @@ public class FTBTeamBases {
             ServerConfig.lobbyDimension().ifPresent(rl -> {
                 if (serverLevel.dimension().equals(rl)) {
                     maybeCreateLobbyFromStructure(serverLevel);
+                    FTBChunksIntegration.maybeAutoClaimLobby(serverLevel);
                 }
             });
+
         }
     }
 

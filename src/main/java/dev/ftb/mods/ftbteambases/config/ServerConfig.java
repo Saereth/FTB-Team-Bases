@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbteambases.config;
 
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.snbt.config.*;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.worldgen.chunkgen.ChunkGenerators;
@@ -10,6 +11,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 
@@ -80,6 +82,24 @@ public interface ServerConfig {
     IntValue CUSTOM_PORTAL_Y_POS = NETHER.addInt("portal_y_pos", 0)
             .comment("See 'use_custom_portal_y'.");
 
+    SNBTConfig AUTOCLAIMING = CONFIG.addGroup("autoclaiming")
+            .comment("Autoclaim lobby areas (FTB Chunks required)");
+    IntValue LOBBY_RADIUS = AUTOCLAIMING.addInt("lobby_radius", 0, 0, Integer.MAX_VALUE)
+            .comment("Radius in chunks for the lobby area to autoclaim",
+                    "0 = autoclaiming disabled",
+                    "1 = autoclaim just the chunk containing the lobby origin pos",
+                    "2+ = extend the autoclaim distance out by 1 chunk per amount beyond 1");
+    EnumValue<AutoClaimShape> LOBBY_SHAPE = AUTOCLAIMING.addEnum("lobby_shape", AutoClaimShape.NAME_MAP)
+            .comment("Shape to be autoclaimed");
+    StringValue LOBBY_SERVER_TEAM_NAME = AUTOCLAIMING.addString("server_team_name", "Lobby")
+            .comment("The display name for the server team which is used to claim the lobby chunks",
+                    "This name shows up on FTB Chunks mapping");
+    StringValue LOBBY_CLAIM_COLOR = AUTOCLAIMING.addString("lobby_claim_color", "#FF40FF")
+            .comment("The server team color",
+                    "Many color names work, and hex codes in the form '#RRGGBB' are accepted");
+    IntArrayValue LOBBY_CLAIM_CENTER = LOBBY.addIntArray("lobby_claim_center", new int[]{ 0, 0 })
+            .comment("X/Z chunk position for the centre of the claimed area");
+
     static Optional<ResourceLocation> lobbyLocation() {
         try {
             return Optional.of(ResourceLocation.parse(LOBBY_STRUCTURE_LOCATION.get()));
@@ -110,6 +130,21 @@ public interface ServerConfig {
 
     static int getNetherPortalYPos(Player player) {
         return USE_CUSTOM_PORTAL_Y_POS.get() ? CUSTOM_PORTAL_Y_POS.get() : player.blockPosition().getY();
+    }
+
+    static Color4I getLobbyTeamColor() {
+        Color4I teamColor = Color4I.fromString(ServerConfig.LOBBY_CLAIM_COLOR.get());
+        return teamColor.isEmpty() ? Color4I.rgb(0xFF40FF) : teamColor;
+    }
+
+    static ChunkPos getClaimCenter() {
+        int[] pos = ServerConfig.LOBBY_CLAIM_CENTER.get();
+        if (pos.length == 2) {
+            return new ChunkPos(pos[0], pos[1]);
+        } else {
+            FTBTeamBases.LOGGER.error("invalid lobby claim centre pos! expected 2 integers, got {}. default to (0, 0)_", pos.length);
+            return new ChunkPos(0, 0);
+        }
     }
 
     enum FeatureGeneration {

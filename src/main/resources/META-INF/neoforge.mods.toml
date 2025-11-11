@@ -43,3 +43,10 @@ type = "required"
 versionRange = "[${ftblibraryversion},)"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies.ftbteambases]]
+modId = "ftbchunks"
+type = "optional"
+versionRange = "[${ftbchunksversion},)"
+ordering = "AFTER"
+side = "BOTH"
