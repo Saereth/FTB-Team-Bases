@@ -155,6 +155,7 @@ tasks.withType(ProcessResources).configureEach {
 			mod_loader_range: mod_loader_range.replace("\${mc_base}", mcMinorAndPatch), // Replace the version in the mod loader range
 			ftblibraryversion: ftb_library_version,
 			ftbteamsversion: ftb_teams_version,
+			ftbchunksversion: ftb_chunks_version
 	]
 
 	inputs.properties replaceProperties
