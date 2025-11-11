@@ -1,6 +1,5 @@
 package dev.ftb.mods.ftbteambases;
 
-import dev.architectury.platform.Platform;
 import dev.ftb.mods.ftblibrary.config.manager.ConfigManager;
 import dev.ftb.mods.ftbteambases.command.CommandUtils;
 import dev.ftb.mods.ftbteambases.config.ClientConfig;
@@ -10,7 +9,6 @@ import dev.ftb.mods.ftbteambases.data.construction.BaseConstructionManager;
 import dev.ftb.mods.ftbteambases.data.construction.RelocatorTracker;
 import dev.ftb.mods.ftbteambases.data.definition.BaseDefinitionManager;
 import dev.ftb.mods.ftbteambases.data.purging.PurgeManager;
-import dev.ftb.mods.ftbteambases.integration.AutoClaiming;
 import dev.ftb.mods.ftbteambases.integration.FTBChunksIntegration;
 import dev.ftb.mods.ftbteambases.net.SyncBaseTemplatesMessage;
 import dev.ftb.mods.ftbteambases.net.VoidTeamDimensionMessage;
