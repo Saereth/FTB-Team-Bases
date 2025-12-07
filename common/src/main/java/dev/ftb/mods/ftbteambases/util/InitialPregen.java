@@ -56,5 +56,13 @@ public class InitialPregen {
                 paths.add(Path.of("dimensions", rl.getNamespace(), rl.getPath()));
             }
         });
+
+        // also add any additional dimensions specified in config
+        for (ResourceLocation rl : ServerConfig.additionalPregenDimensions()) {
+            Path dimPath = Path.of("dimensions", rl.getNamespace(), rl.getPath());
+            if (!paths.contains(dimPath)) {
+                paths.add(dimPath);
+            }
+        }
     }
 }

@@ -12,6 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public interface ServerConfig {
@@ -32,6 +34,9 @@ public interface ServerConfig {
     SNBTConfig LOBBY = CONFIG.addGroup("lobby");
     StringValue LOBBY_STRUCTURE_LOCATION = LOBBY.addString("lobby_structure_location", FTBTeamBases.rl("lobby").toString())
             .comment("Resource location of the structure NBT for the overworld lobby");
+    StringValue ADDITIONAL_PREGEN_DIMENSIONS = LOBBY.addString("additional_pregen_dimensions", "")
+            .comment("Additional dimensions to copy pregen files for on new world creation (comma-separated dimension IDs, e.g. 'mymod:dim1,mymod:dim2'). " +
+                    "Place MCA files in ftbteambases/pregen_initial/dimensions/<namespace>/<path>/region/");
     IntValue LOBBY_Y_POS = LOBBY.addInt("lobby_y_pos", 0, -64, 256)
             .comment("Y position at which the lobby structure will be pasted into the level. " +
                     "Note: too near world min/max build height may result in parts of the structure being cut off - beware.");
@@ -96,6 +101,26 @@ public interface ServerConfig {
             FTBTeamBases.LOGGER.error("invalid lobby spawn pos! expected 3 integers, got {}", pos.length);
             return Optional.empty();
         }
+    }
+
+    static List<ResourceLocation> additionalPregenDimensions() {
+        String value = ADDITIONAL_PREGEN_DIMENSIONS.get();
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+
+        List<ResourceLocation> result = new ArrayList<>();
+        for (String part : value.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                try {
+                    result.add(new ResourceLocation(trimmed));
+                } catch (ResourceLocationException e) {
+                    FTBTeamBases.LOGGER.error("invalid dimension ID in 'additional_pregen_dimensions': {}", trimmed);
+                }
+            }
+        }
+        return result;
     }
 
     enum FeatureGeneration {
