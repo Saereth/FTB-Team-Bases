@@ -6,10 +6,11 @@ FTB Team Bases is a replacement in MC 1.20.1+ for earlier base management mods, 
 
 * Creating bases in a static shared dimension (like FTB Team Islands; dimension ID is `ftbteambases:bases` by default)
 * Creating bases in a private per-team dimension (like FTB Team Dimensions)
-* Creating bases from pregenerated region files, using off-thread copying and relocating of template MCA files into the target dimension (suitable for huge bases, spanning 1 or more entire 512x512-block regions). 
+* Creating bases from pregenerated region files, using off-thread copying and relocating of template MCA files into the target dimension (suitable for huge bases, spanning 1 or more entire 512x512-block regions).
   * Note: this is only suitable for void dimensions, or non-void dimensions with a fixed seed, so the pregenerated regions fit properly with existing worldgen.
 * Creating bases by putting down a Jigsaw block and running jigsaw generation over several ticks (like FTB Dungeons - suitable for large dynamically generated bases)
 * Creating bases by pasting a single NBT structure (suitable for small bases)
+* Creating bases using prebuilt structures from the worldgen registry
 
 The mod is driven by _base definition_ files, which are JSON files in a custom datapack (`<mod-id>/ftb_base_definitions/*.json`). Each definition file is a template from which live team bases are created. Every live team base has a 1:1 association with an FTB Teams team; when FTB Team Bases is loaded, teams can _only_ be created by creating a base, and when a team is disbanded, players will be ejected from that base, and the base will be archived.
 
@@ -67,30 +68,65 @@ To set up a single-structure base in the shared dimension:
 }
 ```
 
-This file goes in a datapack in `ftbteambases/ftb_base_definitions/my_base_type.json` (the filename matches the `id` field in the JSON).
+This file goes in a datapack in `data/<namespace>/ftb_base_definitions/my_base_type.json` (the filename matches the `id` field in the JSON).
 
-Several fields will need to be customised:
-* `id` is a unique template ID. It should match the filename you're using.
-* `description` is free-form text which should be kept short
-* `preview_image` is a resource location for a texture to display in the selection GUI. Typically, you'd use a screenshot of the base.
-* `private` determines whether the base will be created in the shared dimension (`ftbteambases:bases` by default), or if a new dynamic dimension should be created for the base.
-  * When `private` is true, the `dimension_type` field specifies the [dimension type](https://minecraft.fandom.com/wiki/Custom_dimension#Dimension_type) for the new dimension. `ftbteambases:default` works in many cases, but you're free to use a custom type here.
-  * When `private` is false, the `dimension_id` field specifies the dimension which will be used. By default, this `ftbteambases:bases` (a void-world datapack dimension supplied by this mod); you could change this to e.g. `minecraft:overworld` here
-* `spawn_offset` is an offset for the default player spawn position; defaults to [0,0,0] if omitted.
+### Base Definition Fields
+
+**Required fields:**
+* `id` - A unique template ID (ResourceLocation format). Should match the filename.
+* `description` - Free-form text displayed in the selection GUI. Keep it short.
+* `construction` - Defines how the base is built (see construction types below).
+* `dimension` - Defines where the base is created.
+
+**Optional fields:**
+* `author` - Author name (default: "FTB Team")
+* `preview_image` - Resource location for a texture to display in the selection GUI. Typically a screenshot of the base.
+* `dev_mode` - If true, only shown when `show_dev_mode` is enabled in client config (default: false)
+* `display_order` - Integer for ordering in the selection GUI (default: 0)
+* `spawn_offset` - Array `[x, y, z]` offset for the default player spawn position (default: [0,0,0])
   * The default position is typically at the center of the region(s), and at a Y position of the world's surface.
-  * In the third example above, the player would spawn on top of the village house roof if this offset were not specified. 
+* `extents` - Object `{x: int, z: int}` defining region extent (default: {x: 1, z: 1})
 
-Fields in the `construction` section depend on the type of base you're constructing.
+**Dimension section:**
+* `private` - Boolean. If false, base is created in the shared dimension (`ftbteambases:bases` by default). If true, a new dynamic dimension is created for the base.
+* `dimension_id` - Optional custom dimension ID for the base. When `private` is false, this specifies the dimension which will be used (default: `ftbteambases:bases`).
+* `dimension_type` - When `private` is true, specifies the [dimension type](https://minecraft.fandom.com/wiki/Custom_dimension#Dimension_type) for the new dimension. `ftbteambases:default` works in many cases, but you're free to use a custom type here.
 
-For pregenerated bases:
-* `pregen_template` defines where the template MCA files which will be copied/relocated can be found, for pregenerated bases. More on this below.
-* `structure_sets` is a list of structure set ID's defining which structures may be added to the pregenerated terrain
+### Construction Types
 
-For single-structure bases:
-* `structure_location` defines the single NBT structure which will be pasted into the world.
-* `y_pos` determines the Y position at which the structure will be pasted (the X/Z position is at the center of the region)
-  * If omitted, the structure will be pasted at the world surface; for void dimensions, it's recommended to include this setting.
-* `include_entities` controls whether any entities saved in the NBT structure will be added to the world; defaults to false.
+Fields in the `construction` section depend on the type of base you're constructing. There are four construction types:
+
+#### 1. Pregenerated Bases (pregen)
+Uses pre-made MCA region files that are copied/relocated into the target dimension.
+
+* `pregen_template` - Name of the template directory containing MCA files.
+* `structure_sets` - List of structure set IDs defining which structures may be added to the pregenerated terrain.
+
+#### 2. Single Structure Bases
+Pastes a single NBT structure into the world.
+
+* `structure_location` - Resource location of the NBT structure to paste.
+* `y_pos` - Optional Y position for pasting (default: world surface). Recommended for void dimensions.
+* `include_entities` - Whether to include entities from the NBT structure (default: false).
+
+#### 3. Jigsaw Bases
+Uses Minecraft's jigsaw system for procedural generation.
+
+* `template_pool` - Resource location of the jigsaw template pool.
+* `target` - Resource location of the target jigsaw name.
+* `max_gen_depth` - Maximum generation depth (range: 1-20).
+* `y_pos` - Optional Y position for generation.
+* `generation_offset` - Optional array `[x, y, z]` offset for generation.
+* `orientation` - Optional orientation (default: "up_north"). Uses FrontAndTop enum values.
+* `joint_type` - Optional joint type (default: "rollable").
+* `final_state` - Optional block for final state (default: "minecraft:air").
+
+#### 4. Prebuilt Bases
+Uses structures from the worldgen registry.
+
+* `start_structure` - Resource location of the start structure.
+* `structure_set` - Optional structure set ID.
+* `height` - Optional Y position (default: 64).
 
 #### Pregen Templates
 Now you need to put your template MCA files in a directory within your top-level Minecraft server instance: `<instance>/ftbteambases/pregen/<template-name>/`, with `region/`, `entity/` and `poi/` subdirectories. Region MCA files *must* be present, but entity and POI files are optional.
@@ -102,7 +138,7 @@ $ ls ftbteambases/pregen/my_template/region
 r.0.0.mca  r.0.1.mca  r.1.0.mca  r.1.1.mca
 ```
 
-**Note:** only region MCA files are fully supported right now. Entity and POI MCA files (`entity/` and `/poi` subdirectories) are copied for private dimensions, but not supported for relocation in the shared dimension. 
+**Note:** only region MCA files are fully supported right now. Entity and POI MCA files (`entity/` and `/poi` subdirectories) are copied for private dimensions, but not supported for relocation in the shared dimension.
 
 These files are copied directly into the dimension folder for private (non-relocated) dimensions, but processed and renamed when relocated into a shared dimension. For this reason, creating a pregen base in a private dimension is much faster than creating one in a shared dimension.
 
@@ -112,7 +148,44 @@ Like FTB Team Dimensions, this mod creates a __lobby__ where new players are sen
 
 By default, the lobby structure NBT is `ftbteambases:lobby`, a resource location for a datapack NBT structure. You can override the default `ftbteambases/structures/lobby.nbt` file via datapack, or change the location in server config with the `lobby_structure_location` config setting. The lobby structure must include a Structure Block in data mode, with the metadata string `spawn_point`. This block will be used as the player spawn point on initial connection (and will be replaced with air when the structure is placed into the overworld).
 
-This is fine for small lobbies, but if you want a very large complex lobby, it may be advisable to do a pregenerated region instead. In this case, put your pregenerated MCA file into `ftbteambases/pregen_initial/region/`. If you do this, you must also change the `lobby_spawn` [config](#config-files) setting so that the player is spawned in the right place in the lobby on initial join.
+This is fine for small lobbies, but if you want a very large complex lobby, it may be advisable to do a pregenerated region instead. In this case, put your pregenerated MCA file into `ftbteambases/pregen_initial/region/`. If you do this, you must also change the `lobby_spawn_pos` [config](#config-files) setting so that the player is spawned in the right place in the lobby on initial join.
+
+#### Pregenerated Regions for Custom Dimensions
+
+If your lobby is in a custom dimension (non-vanilla), place the MCA files in:
+```
+ftbteambases/pregen_initial/dimensions/<namespace>/<path>/region/
+```
+
+For example, if your lobby dimension is `mymod:lobby_dim`:
+```
+ftbteambases/pregen_initial/dimensions/mymod/lobby_dim/region/r.0.0.mca
+```
+
+#### Additional Pregen Dimensions
+
+You may also want to copy pregenerated region files for dimensions other than the lobby dimension when a new world is created. This is useful for setting up custom dimensions that players will visit later (e.g., a team base dimension with pre-built terrain).
+
+To do this, use the `additional_pregen_dimensions` config option:
+
+```snbt
+lobby: {
+    lobby_dimension: "minecraft:overworld"
+    additional_pregen_dimensions: "mymod:custom_dim, mymod:another_dim"
+}
+```
+
+Then place your MCA files in:
+```
+ftbteambases/pregen_initial/dimensions/<namespace>/<path>/region/
+```
+
+For example, for `lostcrafters:poke_dim`:
+```
+ftbteambases/pregen_initial/dimensions/lostcrafters/poke_dim/region/r.0.0.mca
+```
+
+These files will be automatically copied to the corresponding dimension folders when a new world is created.
 
 #### Custom Dimension for the Lobby
 
@@ -141,7 +214,9 @@ When players first log in to the server (or create an SSP world), they will be i
 There are two ways to do this:
 
 1. Use the `/ftbteambases create <base-definition>` command. This needs admin privileges, so regular players would likely run this via a command block. The base definition is the JSON file you created above, e.g. `/ftbteambases create ftbteambases:my_base_type`
-2. Set up a portal structure, using the `ftbteambases:portal` block. This block can only be obtained with the `/give` command, but can be used to build a portal structure in your lobby (although it looks like a Nether portal block, it doesn't need obsidian around it - feel free to create any shape and surrounding you like). When a player walks into this portal block, they are either teleported to their base (if they have one), or presented with a selection GUI to create a base, based on the currently-existing base definitions.
+2. Set up a portal structure using the `ftbteambases:portal` block. This block can only be obtained with the `/give` command, but can be used to build a portal structure in your lobby. The portal block visually looks like a Nether portal block but doesn't require an obsidian frame - you can create any shape and surrounding you like. When a player walks into this portal block:
+   * If they are in a team: teleports them to their team's base spawn
+   * If they are not in a team: opens the base selection GUI to create a new base
 
 Note that base creation can take a few seconds, especially if there are multiple region files to be copied/relocated from the templates to the live dimension. Players get a progress indicator while their base is being prepared (preparation should not cause any noticeable server lag).
 
@@ -157,14 +232,17 @@ Note that base creation can take a few seconds, especially if there are multiple
 
 ### Admins
 * `/ftbteambases create <base-definition>` - create a base - see [above](#creating-a-base)
-* `/ftbteambases list` - list all known team bases. 
+* `/ftbteambases list` - list all known team bases
   * The **[Show]** and **[Visit]** "buttons" in the resulting text can be clicked to show base details, or teleport to the base (admin privileges required)
-* `/ftbteambases show <base-id>` - show base details. `<base-id>` is in fact an existing FTB Teams shortname
-* `/ftbteambases visit <base-id>` - teleport to a base spawn. `<base-id>` is in fact an existing FTB Teams shortname
+* `/ftbteambases show <base-id>` - show base details. `<base-id>` is an existing FTB Teams shortname
+* `/ftbteambases visit <base-id>` - teleport to a base spawn. `<base-id>` is an existing FTB Teams shortname
 * `/ftbteambases visit` - open a GUI showing all live bases and optionally all archived bases with some performance info, and the option to visit
-* `/ftbteambases nether-visit` - go to the Nether at the point a Nether portal for this team would take you
-* `/ftbteambases archive list` - show all archived bases.
-* `/ftbteambases archive restore <name>` - restore the named archive
+* `/ftbteambases nether-visit <base-id>` - go to the Nether at the point a Nether portal for this team would take you
+* `/ftbteambases relocate <template> <region_x> <region_z> [force]` - relocate region files (async operation for pregen templates)
+* `/ftbteambases setlobbypos <pos>` - set the lobby spawn position (requires permission level 3)
+* `/ftbteambases archive list` - show all archived bases
+* `/ftbteambases archive list_for <player>` - show archived bases for a specific player
+* `/ftbteambases archive restore <archive-id>` - restore the named archive
   * This can also be done by clicking the **[Restore]** "button" beside the base in `archive list` output
 * `/ftbteambases purge id <archive-id>` - schedule an archived base for permanent deletion; `<archive_id>` can be found from the `archive list` output
   * This can also be done by clicking the **[Purge]** "button" beside the base in `archive list` output
@@ -178,6 +256,72 @@ Bases scheduled for purge will be _permanently_ deleted on the next server resta
 
 * `config/ftbteambases-server.snbt` - server side config file
 * `config/ftbteambases-client.snbt` - client side config file
+* `defaultconfigs/ftbteambases/ftbteambases-server.snbt` - default server config (for modpacks)
+
+### Server Config Options
+
+#### General Section
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `clear_player_inv_on_join` | boolean | false | Clear player inventory when joining a team |
+| `heal_player_on_join` | boolean | true | Heal and feed player when joining a team |
+| `clear_player_inv_on_leave` | boolean | true | Clear player inventory when leaving a team |
+| `team_nether_entry_point` | boolean | true | Enable team-specific nether portal destinations |
+| `base_separation` | int | 4 | Base separation in 512-block regions for shared dimensions |
+| `home_cmd_permission_level` | int | 0 | Permission level for `/ftbteambases home` command |
+
+#### Lobby Section
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `lobby_structure_location` | string | "ftbteambases:lobby" | Resource location of the lobby NBT structure |
+| `additional_pregen_dimensions` | string | "" | Comma-separated dimension IDs for additional pregen copying (e.g., "mymod:dim1,mymod:dim2") |
+| `lobby_y_pos` | int | 0 | Y position for pasting the lobby structure (-64 to 256) |
+| `lobby_game_mode` | enum | "adventure" | Game mode for players in the lobby (survival/creative/adventure/spectator) |
+| `lobby_spawn_pos` | int array | [0, 0, 0] | Spawn position for pregen-based lobbies |
+| `lobby_dimension` | string | "minecraft:overworld" | Dimension ID for the lobby (must be static, set before world creation) |
+| `lobby_player_yaw` | double | 0.0 | Player rotation when spawning in lobby (0-360, 0=south) |
+
+#### Worldgen Section
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `chunk_generator` | enum | "simple_void" | Chunk generator type (simple_void/multi_biome_void/custom) |
+| `single_biome_id` | string | "" | Force single biome (e.g., "minecraft:the_void") |
+| `biome_source_from_dimension` | string | "" | Copy biome source from existing dimension |
+| `feature_gen` | enum | "default" | Feature generation (default/never/always) |
+| `noise_settings` | string | "minecraft:overworld" | Noise settings resource location |
+| `entities_in_start_structure` | boolean | true | Include entities from start structure NBT |
+
+#### Nether Section
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allow_nether_portals` | boolean | true | Allow nether portal construction in team dimensions |
+| `team_specific_nether_entry_point` | boolean | true | Use team-specific nether coordinates |
+| `min_dist_from_origin` | int | 1000 | Minimum distance from origin for nether entry points |
+| `max_dist_from_origin` | int | 25000 | Maximum distance from origin for nether entry points |
+| `use_custom_portal_y` | boolean | false | Use custom Y position for nether entry |
+| `portal_y_pos` | int | 0 | Custom Y position for nether entry (if enabled) |
+
+#### Autoclaiming Section (FTB Chunks required)
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `lobby_radius` | int | 0 | Radius in chunks for lobby autoclaim (0 = disabled) |
+| `lobby_shape` | enum | "square" | Shape to autoclaim (square/circle) |
+| `server_team_name` | string | "Lobby" | Display name for server team on FTB Chunks map |
+| `lobby_claim_color` | string | "#FF40FF" | Server team color (hex or color name) |
+| `lobby_claim_center` | int array | [0, 0] | X/Z chunk position for claim center |
+
+### Client Config Options
+
+#### General Section
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `hide_void_fog` | boolean | true | Suppress void fog in void dimensions |
+| `void_horizon` | double | 0.0 | Y level where sky turns black in void dimensions |
+
+#### Advanced Section
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `show_dev_mode` | boolean | false | Show dev_mode bases in selection GUI |
 
 ## Support
 
