@@ -25,8 +25,10 @@ To set up a pregenerated base with region-relocation into the default shared dim
 ```json5
 {
   "id": "ftbteambases:my_base_type",
-  "description": "Some description text",
-  "preview_image": "ftbteambases:textures/spawn/default.png",
+  "display": {
+    "description": "Some description text",
+    "preview_image": "ftbteambases:textures/spawn/default.png"
+  },
   "construction": {
     "pregen_template": "my_template",
     "structure_sets": [ ]
@@ -54,8 +56,10 @@ To set up a single-structure base in the shared dimension:
 ```json5
 {
   "id": "ftbteambases:my_base_type",
-  "description": "Some description text",
-  "preview_image": "ftbteambases:textures/spawn/default.png",
+  "display": {
+    "description": "Some description text",
+    "preview_image": "ftbteambases:textures/spawn/default.png"
+  },
   "construction": {
     "structure_location": "minecraft:village/plains/houses/plains_medium_house_1",
     "y_pos": 64,
@@ -72,22 +76,23 @@ This file goes in a datapack in `data/<namespace>/ftb_base_definitions/my_base_t
 
 ### Base Definition Fields
 
-**Required fields:**
+**Top-level fields:**
 * `id` - A unique template ID (ResourceLocation format). Should match the filename.
-* `description` - Free-form text displayed in the selection GUI. Keep it short.
+* `display` - Object containing display settings (see below).
 * `construction` - Defines how the base is built (see construction types below).
-* `dimension` - Defines where the base is created.
+* `dimension` - Defines where the base is created (see below).
+* `spawn_offset` - Optional array `[x, y, z]` offset for the default player spawn position (default: [0,0,0])
+  * The default position is typically at the center of the region(s), and at a Y position of the world's surface.
+* `extents` - Optional object `{x: int, z: int}` defining region extent (default: {x: 1, z: 1})
 
-**Optional fields:**
+**Display section (`display`):**
+* `description` - Required. Free-form text displayed in the selection GUI. Keep it short.
 * `author` - Author name (default: "FTB Team")
 * `preview_image` - Resource location for a texture to display in the selection GUI. Typically a screenshot of the base.
-* `dev_mode` - If true, only shown when `show_dev_mode` is enabled in client config (default: false)
 * `display_order` - Integer for ordering in the selection GUI (default: 0)
-* `spawn_offset` - Array `[x, y, z]` offset for the default player spawn position (default: [0,0,0])
-  * The default position is typically at the center of the region(s), and at a Y position of the world's surface.
-* `extents` - Object `{x: int, z: int}` defining region extent (default: {x: 1, z: 1})
+* `dev_mode` - If true, only shown when `show_dev_mode` is enabled in client config (default: false)
 
-**Dimension section:**
+**Dimension section (`dimension`):**
 * `private` - Boolean. If false, base is created in the shared dimension (`ftbteambases:bases` by default). If true, a new dynamic dimension is created for the base.
 * `dimension_id` - Optional custom dimension ID for the base. When `private` is false, this specifies the dimension which will be used (default: `ftbteambases:bases`).
 * `dimension_type` - When `private` is true, specifies the [dimension type](https://minecraft.fandom.com/wiki/Custom_dimension#Dimension_type) for the new dimension. `ftbteambases:default` works in many cases, but you're free to use a custom type here.
@@ -284,7 +289,7 @@ Bases scheduled for purge will be _permanently_ deleted on the next server resta
 #### Worldgen Section
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `chunk_generator` | enum | "simple_void" | Chunk generator type (simple_void/multi_biome_void/custom) |
+| `chunk_generator` | enum | "multi_biome_void" | Chunk generator type (multi_biome_void/custom) |
 | `single_biome_id` | string | "" | Force single biome (e.g., "minecraft:the_void") |
 | `biome_source_from_dimension` | string | "" | Copy biome source from existing dimension |
 | `feature_gen` | enum | "default" | Feature generation (default/never/always) |
