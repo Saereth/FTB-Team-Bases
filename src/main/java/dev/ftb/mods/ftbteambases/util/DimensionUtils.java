@@ -3,6 +3,7 @@ package dev.ftb.mods.ftbteambases.util;
 import com.google.common.collect.ImmutableList;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.config.ServerConfig;
+import dev.ftb.mods.ftbteambases.config.StartupConfig;
 import dev.ftb.mods.ftbteambases.data.bases.BaseInstanceManager;
 import dev.ftb.mods.ftbteambases.data.bases.LiveBaseDetails;
 import dev.ftb.mods.ftbteambases.data.definition.BaseDefinition;
@@ -116,7 +117,7 @@ public class DimensionUtils {
         ServerLevel level = player.server.getLevel(key);
 
         if (level != null) {
-            if (key.equals(ServerConfig.lobbyDimension().orElse(Level.OVERWORLD))) {
+            if (key.equals(StartupConfig.lobbyDimension().orElse(Level.OVERWORLD))) {
                 BlockPos lobbySpawnPos = BaseInstanceManager.get(player.server).getLobbySpawnPos();
                 BlockPos pos = Objects.requireNonNullElse(destPos, lobbySpawnPos);
 

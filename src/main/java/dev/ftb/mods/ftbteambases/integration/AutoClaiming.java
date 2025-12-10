@@ -9,6 +9,7 @@ import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.math.ChunkDimPos;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.config.ServerConfig;
+import dev.ftb.mods.ftbteambases.config.StartupConfig;
 import dev.ftb.mods.ftbteams.api.FTBTeamsAPI;
 import dev.ftb.mods.ftbteams.api.Team;
 import dev.ftb.mods.ftbteams.api.TeamManager;
@@ -24,7 +25,7 @@ public class AutoClaiming {
 
     public static void handleLobbyAutoclaiming(ServerLevel serverLevel) {
         // at this point, it's safe to assume that FTB Chunks is present
-        if (ServerConfig.LOBBY_RADIUS.get() == 0 || ServerConfig.lobbyPos().isEmpty()) {
+        if (ServerConfig.LOBBY_RADIUS.get() == 0 || StartupConfig.lobbyPos().isEmpty()) {
             return;
         }
 
@@ -57,7 +58,7 @@ public class AutoClaiming {
                 }
             });
             FTBTeamBases.LOGGER.info("autoclaimed {} chunks around lobby pos {} ({}) for server team {}",
-                    claimed.getValue(), ServerConfig.lobbyPos().get(), ServerConfig.LOBBY_SHAPE.get(), lobbyTeam.getShortName());
+                    claimed.getValue(), StartupConfig.lobbyPos().get(), ServerConfig.LOBBY_SHAPE.get(), lobbyTeam.getShortName());
         } catch (CommandSyntaxException e) {
             FTBTeamBases.LOGGER.error("can't create server team {}: {}", teamName, e.getMessage());
         }

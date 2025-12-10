@@ -3,6 +3,7 @@ package dev.ftb.mods.ftbteambases.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.ftb.mods.ftbteambases.config.ServerConfig;
+import dev.ftb.mods.ftbteambases.config.StartupConfig;
 import dev.ftb.mods.ftbteambases.data.bases.BaseInstanceManager;
 import dev.ftb.mods.ftbteambases.util.MiscUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -29,7 +30,7 @@ public class SetLobbyPosCommand {
 
         source.sendSuccess(() -> Component.literal("lobby pos updated to " + MiscUtil.blockPosStr(pos)), false);
 
-        ServerConfig.lobbyDimension().ifPresent(dim -> {
+        StartupConfig.lobbyDimension().ifPresent(dim -> {
             ServerLevel level = source.getServer().getLevel(dim);
             if (level != null) {
                 level.setDefaultSpawnPos(pos, ServerConfig.LOBBY_PLAYER_YAW.get().floatValue());

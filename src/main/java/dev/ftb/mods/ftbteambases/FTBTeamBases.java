@@ -4,6 +4,7 @@ import dev.ftb.mods.ftblibrary.config.manager.ConfigManager;
 import dev.ftb.mods.ftbteambases.command.CommandUtils;
 import dev.ftb.mods.ftbteambases.config.ClientConfig;
 import dev.ftb.mods.ftbteambases.config.ServerConfig;
+import dev.ftb.mods.ftbteambases.config.StartupConfig;
 import dev.ftb.mods.ftbteambases.data.bases.BaseInstanceManager;
 import dev.ftb.mods.ftbteambases.data.construction.BaseConstructionManager;
 import dev.ftb.mods.ftbteambases.data.construction.RelocatorTracker;
@@ -76,6 +77,7 @@ public class FTBTeamBases {
         ModSounds.init(modBus);
         ModArgumentTypes.init(modBus);
 
+        ConfigManager.getInstance().registerStartupConfig(StartupConfig.CONFIG, "startup");
         ConfigManager.getInstance().registerServerConfig(ServerConfig.CONFIG, "server", false);
         ConfigManager.getInstance().registerClientConfig(ClientConfig.CONFIG, "client");
 
@@ -119,7 +121,7 @@ public class FTBTeamBases {
     }
 
     private static void serverStarted(ServerStartedEvent event) {
-        ServerConfig.lobbyDimension().ifPresent(dim -> {
+        StartupConfig.lobbyDimension().ifPresent(dim -> {
             // only override overworld default spawn pos if the lobby is actually in the overworld
             if (dim.equals(OVERWORLD)) {
                 ServerLevel level = event.getServer().getLevel(OVERWORLD);
@@ -150,7 +152,7 @@ public class FTBTeamBases {
                 }
             }
 
-            ServerConfig.lobbyDimension().ifPresent(rl -> {
+            StartupConfig.lobbyDimension().ifPresent(rl -> {
                 if (serverLevel.dimension().equals(rl)) {
                     maybeCreateLobbyFromStructure(serverLevel);
                     FTBChunksIntegration.maybeAutoClaimLobby(serverLevel);
@@ -170,7 +172,7 @@ public class FTBTeamBases {
     private static void playerJoinLevel(EntityJoinLevelEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && event.getLevel() instanceof ServerLevel serverLevel) {
             if (isFirstTimeConnecting(player, serverLevel)) {
-                ServerLevel destLevel = ServerConfig.lobbyDimension()
+                ServerLevel destLevel = StartupConfig.lobbyDimension()
                         .map(dim -> serverLevel.getServer().getLevel(dim))
                         .orElse(serverLevel);
 
@@ -204,7 +206,7 @@ public class FTBTeamBases {
 
     private static void switchGameMode(ServerPlayer player, @Nullable ResourceKey<Level> oldDim, ResourceKey<Level> newDim) {
         GameType lobbyGameMode = ServerConfig.LOBBY_GAME_MODE.get();
-        ResourceKey<Level> lobby = ServerConfig.lobbyDimension().orElse(OVERWORLD);
+        ResourceKey<Level> lobby = StartupConfig.lobbyDimension().orElse(OVERWORLD);
 
         if (newDim.equals(lobby) && player.gameMode.getGameModeForPlayer() != lobbyGameMode && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE) {
             player.setGameMode(lobbyGameMode);
@@ -275,7 +277,7 @@ public class FTBTeamBases {
         MinecraftServer server = event.getEntity().getServer();
         if (server != null) {
             BaseInstanceManager mgr = BaseInstanceManager.get(server);
-            ServerLevel lobbyLvl = server.getLevel(ServerConfig.lobbyDimension().orElse(Level.OVERWORLD));
+            ServerLevel lobbyLvl = server.getLevel(StartupConfig.lobbyDimension().orElse(Level.OVERWORLD));
             if (lobbyLvl != null) {
                 event.setDimensionTransition(new DimensionTransition(
                         lobbyLvl, Vec3.atCenterOf(mgr.getLobbySpawnPos()), Vec3.ZERO,

@@ -8,6 +8,7 @@ import dev.ftb.mods.ftblibrary.math.XZ;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.command.CommandUtils;
 import dev.ftb.mods.ftbteambases.config.ServerConfig;
+import dev.ftb.mods.ftbteambases.config.StartupConfig;
 import dev.ftb.mods.ftbteambases.data.definition.BaseDefinition;
 import dev.ftb.mods.ftbteambases.data.purging.PurgeManager;
 import dev.ftb.mods.ftbteambases.events.BaseArchivedEvent;
@@ -279,7 +280,7 @@ public class BaseInstanceManager extends SavedData {
 
     public boolean teleportToLobby(ServerPlayer serverPlayer) {
         if (lobbySpawnPos != null) {
-            ResourceKey<Level> destLevel = ServerConfig.lobbyDimension().orElse(Level.OVERWORLD);
+            ResourceKey<Level> destLevel = StartupConfig.lobbyDimension().orElse(Level.OVERWORLD);
             return DimensionUtils.teleport(serverPlayer, destLevel, lobbySpawnPos, ServerConfig.LOBBY_PLAYER_YAW.get().floatValue());
         }
         return false;

@@ -41,23 +41,12 @@ public interface ServerConfig {
     StringValue LOBBY_STRUCTURE_LOCATION = LOBBY.addString("lobby_structure_location", FTBTeamBases.rl("lobby").toString())
             .comment("Resource location of the structure NBT for the lobby",
                     "This is ignored if using pregenerated lobby region files (.mca files copied from ftbteambases/pregen_initial/)");
-    ResourceLocationListValue ADDITIONAL_PREGEN_DIMENSIONS = LOBBY.add(new ResourceLocationListValue(
-            LOBBY,
-            "additional_pregen_dimensions",
-            List.of(),
-            "Additional dimensions to copy pregen files for on new world creation.\n" +
-                    "Place MCA files in ftbteambases/pregen_initial/dimensions/<namespace>/<path>/region/"
-    ));
     IntValue LOBBY_Y_POS = LOBBY.addInt("lobby_y_pos", 0, -64, 256)
             .comment("Y position at which the lobby structure will be pasted into the level. " +
                     "Note: too near world min/max build height may result in parts of the structure being cut off - beware.");
     EnumValue<GameType> LOBBY_GAME_MODE = LOBBY.addEnum("lobby_game_mode", GAME_TYPE_NAME_MAP)
             .comment("The default game mode given to players when in the lobby.",
                     "Note that admin-mode players are free to change this.");
-    IntArrayValue LOBBY_SPAWN = LOBBY.addIntArray("lobby_spawn_pos", new int[]{ 0, 0, 0})
-            .comment("Position at which new players spawn. Only used if the lobby structure comes from a pregenerated region!");
-    StringValue LOBBY_DIMENSION = LOBBY.addString("lobby_dimension", "minecraft:overworld")
-            .comment("Dimension ID of the level in which the lobby is created. This *must* be a static pre-existing dimension, not a dynamically created one! New players will be automatically teleported to this dimension the first time they connect to the server. This setting should be defined in default config so the server has it before any levels are created - do NOT modify this on existing worlds!");
     DoubleValue LOBBY_PLAYER_YAW = LOBBY.addDouble("lobby_player_yaw", 0.0, 0.0, 360.0)
             .comment("Player Y-axis rotation when initially spawning in, or returning to, the lobby. (0 = south, 90 = west, 180 = north, 270 = east)");
 
@@ -117,25 +106,6 @@ public interface ServerConfig {
         }
     }
 
-    static Optional<ResourceKey<Level>> lobbyDimension() {
-        try {
-            return Optional.of(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(LOBBY_DIMENSION.get())));
-        } catch (ResourceLocationException ignored) {
-            FTBTeamBases.LOGGER.error("invalid dimension ID in config 'lobby_dimension': {}", ServerConfig.LOBBY_DIMENSION.get());
-            return Optional.empty();
-        }
-    }
-
-    static Optional<BlockPos> lobbyPos() {
-        int[] pos = ServerConfig.LOBBY_SPAWN.get();
-        if (pos.length == 3) {
-            return Optional.of(new BlockPos(pos[0], pos[1], pos[2]));
-        } else {
-            FTBTeamBases.LOGGER.error("invalid lobby spawn pos! expected 3 integers, got {}", pos.length);
-            return Optional.empty();
-        }
-    }
-
     static int getNetherPortalYPos(Player player) {
         return USE_CUSTOM_PORTAL_Y_POS.get() ? CUSTOM_PORTAL_Y_POS.get() : player.blockPosition().getY();
     }
@@ -153,10 +123,6 @@ public interface ServerConfig {
             FTBTeamBases.LOGGER.error("invalid lobby claim centre pos! expected 2 integers, got {}. default to (0, 0)_", pos.length);
             return new ChunkPos(0, 0);
         }
-    }
-
-    static List<ResourceLocation> additionalPregenDimensions() {
-        return ADDITIONAL_PREGEN_DIMENSIONS.get();
     }
 
     enum FeatureGeneration {
