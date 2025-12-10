@@ -1,7 +1,6 @@
 package dev.ftb.mods.ftbteambases.config;
 
 import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftblibrary.snbt.config.*;
 import dev.ftb.mods.ftbteambases.FTBTeamBases;
 import dev.ftb.mods.ftbteambases.worldgen.chunkgen.ChunkGenerators;
@@ -13,11 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,45 +33,13 @@ public interface ServerConfig {
     SNBTConfig LOBBY = CONFIG.addGroup("lobby");
     StringValue LOBBY_STRUCTURE_LOCATION = LOBBY.addString("lobby_structure_location", FTBTeamBases.rl("lobby").toString())
             .comment("Resource location of the structure NBT for the overworld lobby");
-    BaseValue<List<ResourceLocation>> ADDITIONAL_PREGEN_DIMENSIONS = createAdditionalPregenDimensionsValue();
-
-    private static BaseValue<List<ResourceLocation>> createAdditionalPregenDimensionsValue() {
-        BaseValue<List<ResourceLocation>> value = new BaseValue<List<ResourceLocation>>(LOBBY, "additional_pregen_dimensions", List.of()) {
-            @Override
-            public void write(SNBTCompoundTag tag) {
-                ListTag list = new ListTag();
-                for (ResourceLocation rl : get()) {
-                    list.add(StringTag.valueOf(rl.toString()));
-                }
-                tag.comment(key, "Additional dimensions to copy pregen files for on new world creation.\n" +
-                        "Place MCA files in ftbteambases/pregen_initial/dimensions/<namespace>/<path>/region/");
-                tag.put(key, list);
-            }
-
-            @Override
-            public void read(SNBTCompoundTag tag) {
-                if (!tag.contains(key)) {
-                    set(defaultValue);
-                    return;
-                }
-                ListTag listTag = tag.getList(key, Tag.TAG_STRING);
-                List<ResourceLocation> result = new ArrayList<>();
-                for (Tag t : listTag) {
-                    String value = t.getAsString();
-                    if (value != null && !value.isBlank()) {
-                        try {
-                            result.add(new ResourceLocation(value));
-                        } catch (ResourceLocationException e) {
-                            FTBTeamBases.LOGGER.error("Invalid dimension ID in '{}': {}", key, value);
-                        }
-                    }
-                }
-                set(List.copyOf(result));
-            }
-        };
-        LOBBY.add(value);
-        return value;
-    }
+    ResourceLocationListValue ADDITIONAL_PREGEN_DIMENSIONS = LOBBY.add(new ResourceLocationListValue(
+            LOBBY,
+            "additional_pregen_dimensions",
+            List.of(),
+            "Additional dimensions to copy pregen files for on new world creation.\n" +
+                    "Place MCA files in ftbteambases/pregen_initial/dimensions/<namespace>/<path>/region/"
+    ));
     IntValue LOBBY_Y_POS = LOBBY.addInt("lobby_y_pos", 0, -64, 256)
             .comment("Y position at which the lobby structure will be pasted into the level. " +
                     "Note: too near world min/max build height may result in parts of the structure being cut off - beware.");
