@@ -10,6 +10,7 @@
     "BaseFireBlockMixin",
     "ChunkGeneratorAccess",
     "EntityAccess",
+    "EntityMixin",
     "LevelAccess",
     "PersistentEntitySectionManagerAccess",
     "PlayerListMixin",

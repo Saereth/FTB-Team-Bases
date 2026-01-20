@@ -31,6 +31,8 @@ public interface ServerConfig {
             .comment("When set to true, the player's inventory will be cleared when leaving a team");
     BooleanValue TEAM_NETHER_ENTRY_POINT = GENERAL.addBoolean("team_nether_entry_point", true)
             .comment("If true, then players going to the Nether via Nether Portal will be sent to a team-specific position in the Nether");
+    BooleanValue ALLOW_LOBBY_SPECTATORS = GENERAL.addBoolean("allow_lobby_spectators", false)
+            .comment("If true, allow spectator-mode players to use the lobby portal");
 
     SNBTConfig LOBBY = CONFIG.addGroup("lobby");
     StringValue LOBBY_STRUCTURE_LOCATION = LOBBY.addString("lobby_structure_location", FTBTeamBases.rl("lobby").toString())

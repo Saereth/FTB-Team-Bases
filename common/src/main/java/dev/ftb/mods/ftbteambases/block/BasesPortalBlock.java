@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbteambases.block;
 
+import dev.ftb.mods.ftbteambases.config.ServerConfig;
 import dev.ftb.mods.ftbteambases.data.construction.BaseConstructionManager;
 import dev.ftb.mods.ftbteambases.data.bases.BaseInstanceManager;
 import dev.ftb.mods.ftbteambases.net.ShowSelectionGuiMessage;
@@ -11,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -71,5 +73,15 @@ public class BasesPortalBlock extends NetherPortalBlock {
     @Override
     public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         return blockState;
+    }
+
+    public static void checkForSpectator(Entity entity) {
+        // spectator mode players don't normally activate portals - see EntityMixin
+        if (entity instanceof Player player && player.isSpectator() && ServerConfig.ALLOW_LOBBY_SPECTATORS.get()) {
+            BlockPos pos = player.blockPosition().above();
+            if (player.level().getBlockState(pos).getBlock() == ModBlocks.PORTAL.get()) {
+                player.getFeetBlockState().entityInside(player.level(), player.blockPosition(), player);
+            }
+        }
     }
 }
