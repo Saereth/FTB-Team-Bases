@@ -16,7 +16,6 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public interface ServerConfig {
     NameMap<GameType> GAME_TYPE_NAME_MAP = NameMap.of(GameType.ADVENTURE, GameType.values()).create();
@@ -54,6 +53,8 @@ public interface ServerConfig {
             .comment("Dimension ID of the level in which the lobby is created. This *must* be a static pre-existing dimension, not a dynamically created one! New players will be automatically teleported to this dimension the first time they connect to the server. This setting should be defined in default config so the server has it before any levels are created - do NOT modify this on existing worlds!");
     DoubleValue LOBBY_PLAYER_YAW = LOBBY.addDouble("lobby_player_yaw", 0.0, 0.0, 360.0)
             .comment("Player Y-axis rotation when initially spawning in, or returning to, the lobby. (0 = south, 90 = west, 180 = north, 270 = east)");
+    IntArrayValue LOBBY_CLAIM_CENTER = LOBBY.addIntArray("lobby_claim_center", new int[]{ 0, 0 })
+            .comment("X/Z chunk position for the centre of the claimed area");
 
     SNBTConfig WORLDGEN = CONFIG.addGroup("worldgen");
     EnumValue<ChunkGenerators> CHUNK_GENERATOR = WORLDGEN.addEnum("chunk_generator", ChunkGenerators.NAME_MAP)
@@ -134,41 +135,13 @@ public interface ServerConfig {
         return teamColor.isEmpty() ? Color4I.rgb(0xFF40FF) : teamColor;
     }
 
-    enum AutoClaimShape {
-        SQUARE("square"),
-        CIRCLE("circle");
-
-        public static final NameMap<AutoClaimShape> NAME_MAP = NameMap.of(SQUARE, values()).id(AutoClaimShape::getId).create();
-
-        private final String shape;
-
-        AutoClaimShape(String id) {
-            this.shape = id;
-        }
-
-        public String getId() {
-            return shape;
-        }
-
-        public void forEachChunk(BlockPos origin, int radius, Consumer<ChunkPos> consumer) {
-            ChunkPos chunk0 = new ChunkPos(origin);
-            BlockPos pos0 = chunk0.getMiddleBlockPosition(0);
-            int blockRadiusSq = (radius << 4) * (radius << 4);
-            switch (radius) {
-                case 0 -> { }
-                case 1 -> consumer.accept(chunk0);
-                default -> {
-                    int r = radius - 1;
-                    for (int cx = chunk0.x - r; cx <= chunk0.x + r; cx++) {
-                        for (int cz = chunk0.z - r; cz <= chunk0.z + r; cz++) {
-                            ChunkPos cp = new ChunkPos(cx, cz);
-                            if (this == SQUARE || cp.getMiddleBlockPosition(0).distSqr(pos0) < blockRadiusSq) {
-                                consumer.accept(cp);
-                            }
-                        }
-                    }
-                }
-            };
+    static ChunkPos getClaimCenter() {
+        int[] pos = ServerConfig.LOBBY_CLAIM_CENTER.get();
+        if (pos.length == 2) {
+            return new ChunkPos(pos[0], pos[1]);
+        } else {
+            FTBTeamBases.LOGGER.error("invalid lobby claim centre pos! expected 2 integers, got {}. default to (0, 0)_", pos.length);
+            return new ChunkPos(0, 0);
         }
     }
 

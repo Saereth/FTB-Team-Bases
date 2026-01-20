@@ -33,3 +33,10 @@ mandatory = true
 versionRange = "[9.1.12,)"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies.ftbteambases]]
+modId = "ftbchunks"
+mandatory = false
+versionRange = "[${ftbchunksversion},)"
+ordering = "AFTER"
+side = "BOTH"
