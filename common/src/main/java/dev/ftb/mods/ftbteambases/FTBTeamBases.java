@@ -127,10 +127,7 @@ public class FTBTeamBases {
 
     private static void onLevelLoad(ServerLevel serverLevel) {
         if (serverLevel.dimension() == OVERWORLD) {
-            if (InitialPregen.maybeDoInitialPregen(serverLevel.getServer())) {
-                FTBChunksIntegration.maybeAutoClaimLobby(serverLevel);
-                return;
-            }
+            InitialPregen.maybeDoInitialPregen(serverLevel.getServer());
         }
 
         ServerConfig.lobbyDimension().ifPresent(rl -> {
